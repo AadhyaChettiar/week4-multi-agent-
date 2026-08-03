@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Murder Mystery Dinner Party Writer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background: #111827;
+        color: #f9fafb;
+      }
+      .card {
+        background: #1f2937;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      button {
+        padding: 0.6rem 0.9rem;
+        border: none;
+        border-radius: 999px;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+      }
+      textarea {
+        width: 100%;
+        min-height: 90px;
+        resize: none;
+        border-radius: 8px;
+        padding: 0.7rem;
+        box-sizing: border-box;
+        font: inherit;
+        margin-bottom: 0.75rem;
+      }
+      .topics {
+        display: grid;
+        gap: 0.75rem;
+      }
+      .topic-button {
+        text-align: left;
+        background: #374151;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Murder Mystery Dinner Party</h1>
+      <div id="app"><p>Agent 01 will suggest five story topics for this murder mystery dinner party essay.</p></div>
+    </main>
+
+    <script>
+      const app = document.getElementById('app');
+      let currentTopic = '';
+      let currentDraft = '';
+      let editMode = false;
+      let draftParagraphs = [];
+      let compareDraft = false;
+      let agentStatus = null;
+      let agentError = null;
+
+      function renderState() {
+        app.innerHTML = `
+          ${agentStatus ? `<div class="card"><strong>${agentStatus.name}</strong> is thinking: ${agentStatus.message}</div>` : ''}
+          ${agentError ? `<div class="card"><strong>${agentError.name}</strong> failed: ${agentError.message}<br /><button onclick="retryAgent('${agentError.name}')">Retry ${agentError.name}</button></div>` : ''}
+        `;
+      }
+
+      async function loadTopics() {
+        agentStatus = { name: 'Agent 01', message: 'Generating five murder mystery topics' };
+        agentError = null;
+        renderState();
+        const topics = [
+          'A locked room with a suspicious host',
+          'A poisoned dessert at a gala',
+          'A missing heir and a family secret',
+          'A midnight treasure hunt with clues',
+          'A seaside manor and a forged will'
+        ];
+
+        setTimeout(() => {
+          agentStatus = null;
+          app.innerHTML = `
+            <p>Here are five topics:</p>
+            <div class="topics">
+              ${topics.map((topic) => `<button class="topic-button" onclick="selectTopic('${topic}')">${topic}</button>`).join('')}
+            </div>
+            <br />
+            <button onclick="loadTopics()">Five more topics</button>
+          `;
+        }, 300);
+      }
+
+      function splitParagraphs(text) {
+        return text.split(/\n{2,}/).map((paragraph) => paragraph.trim()).filter(Boolean);
+      }
+
+      function renderDraft() {
+        app.innerHTML = `
+          <h2>Draft essay</h2>
+        
+          <p><strong>Topic:</strong> ${currentTopic}</p>
+          ${editMode ? `
+            <div class="card">
+              ${draftParagraphs.map((paragraph, index) => `
+                <textarea oninput="updateDraftParagraph(${index}, this.value); this.style.height='auto'; this.style.height=this.scrollHeight+'px';">${paragraph}</textarea>
+              `).join('')}
+            </div>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+              <button onclick="saveDraftEdits()">Save edits</button>
+              <button onclick="toggleEditMode(false)">Cancel</button>
+            </div>
+          ` : `
+            <div class="card">
+              <p>${currentDraft}</p>
+            </div>
+                  <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+              <button onclick="toggleEditMode(true)">Edit the draft</button>
+              <button onclick="regenerateDraft()">Draft it again</button>
+              <button onclick="loadTopics()">Pick another topic</button>
+              <button onclick="approveAndSendToEditor()">Approve and send to the editor</button>
+            </div>
+          `}
+        `;
+      }
+
+      async function selectTopic(topic) {
+        currentTopic = topic;
+        agentStatus = { name: 'Agent 02', message: 'Drafting your essay' };
+        agentError = null;
+        renderState();
+
+        setTimeout(() => {
+          if (Math.random() < 0.2) {
+            agentStatus = null;
+            agentError = { name: 'Agent 02', message: 'The draft request failed. Please retry.' };
+            renderState();
+            return;
+          }
+
+          currentDraft = `At the center of ${topic.toLowerCase()}, the evening begins as an elegant dinner party, but the atmosphere quickly turns tense when the host disappears behind a locked door and a single glass of wine is found overturned near the dessert table. The guests, each wearing carefully chosen expressions of innocence, begin to trade nervous glances as the lights flicker and the music stops. What should have been a charming celebration becomes a chamber of suspicion, where every conversation feels like a clue and every carefully chosen seat seems to matter. The story grows sharper as the guests reveal hidden motives, old grudges, and secrets tied to the family fortune, the missing heir, and the midnight invitation that started the evening. By the time the final reveal arrives, the dinner party has transformed into a brilliant web of deception, leaving the reader with the unsettling sense that the deadliest secret was hiding in plain sight all along.`;
+          draftParagraphs = splitParagraphs(currentDraft);
+          editMode = false;
+          agentStatus = null;
+          renderDraft();
+        }, 400);
+      }
+
+      function toggleEditMode(value) {
+        editMode = value;
+        renderDraft();
+      }
+
+      function updateDraftParagraph(index, value) {
+        draftParagraphs[index] = value;
+      }
+
+      function saveDraftEdits() {
+        currentDraft = draftParagraphs.join('\n\n');
+        editMode = false;
+        renderDraft();
+      }
+
+      function regenerateDraft() {
+        currentDraft = `At the center of ${currentTopic.toLowerCase()}, the evening begins with elegant music and shimmering silverware, but the mood shifts when the hostess vanishes behind the locked study door and a hidden note is discovered beneath the dessert plate. The guests become suspects almost immediately, each one trying to seem calm while secretly measuring the others for guilt. As the night continues, the dinner party becomes a labyrinth of alibis, family secrets, and long-buried grudges that begin to surface with every passing course. The tension rises until the final reveal exposes a killer who was never far from the candlelight, and the guests realize that the most dangerous secret at the table belonged to the person they trusted most.`;
+        draftParagraphs = splitParagraphs(currentDraft);
+        renderDraft();
+      }
+
+      function approveAndSendToEditor() {
+        if (editMode) {
+          saveDraftEdits();
+        }
+
+        agentStatus = { name: 'Agent 03', message: 'Polishing the current draft' };
+        agentError = null;
+        renderState();
+
+        setTimeout(() => {
+          if (Math.random() < 0.2) {
+            agentStatus = null;
+            agentError = { name: 'Agent 03', message: 'The editing pass failed. Please retry.' };
+            renderState();
+            return;
+          }
+
+          const critique = [
+            'The opening creates strong intrigue.',
+            'The pacing becomes more vivid with sharper detail.'
+          ];
+          const improvedEssay = `At the heart of ${currentTopic.toLowerCase()}, the evening begins as a glittering dinner party where every place setting is immaculate and every guest has a polished smile, yet the atmosphere shifts the moment the host vanishes behind a locked door and an overturned glass is discovered beside the dessert course. What had seemed like a charming celebration becomes a chamber of suspicion, where each guest has a reason to lie and every conversation feels like a clue. The dinner party transforms into a carefully staged puzzle as the guests reveal hidden grudges, family secrets, and old debts, while the pressure of the investigation tightens around them. The mystery deepens as the missing host’s last note points toward someone inside the house, and the guests begin to wonder whether the real danger is the killer or the truth that has been carefully hidden for years. By the final reveal, the reader understands that the crime was not simply committed in a locked room, but arranged with precision by someone who knew everyone’s weaknesses and used the elegance of the evening to conceal a much darker motive. The story ends with the unsettling realization that the most dangerous person in the room was the one who seemed most composed, and that the dinner party itself had been a performance designed to expose a single, devastating secret.`;
+          const wordCount = improvedEssay.split(/\s+/).filter(Boolean).length;
+          agentStatus = null;
+
+          app.innerHTML = `
+            <h2>Final review</h2>
+            <p><strong>Topic:</strong> ${currentTopic}</p>
+            <div class="card">
+              <h3>Critique</h3>
+              <ul>${critique.map((item) => `<li>${item}</li>`).join('')}</ul>
+            </div>
+            <div class="card">
+              <h3>Improved essay</h3>
+              <p><strong>Word count:</strong> ${wordCount}</p>
+              <p>${improvedEssay}</p>
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <button onclick="navigator.clipboard.writeText('${improvedEssay.replace(/'/g, "\\'")}')">Copy the final essay</button>
+                <button onclick="toggleCompare()">${compareDraft ? 'Hide draft comparison' : 'Compare with my draft'}</button>
+              </div>
+            </div>
+            ${compareDraft ? `<div class="card"><h3>Your draft</h3><p>${currentDraft}</p></div>` : ''}
+            <button onclick="loadTopics()">Start a new essay</button>
+          `;
+        }, 400);
+      }
+
+      function toggleCompare() {
+        compareDraft = !compareDraft;
+        approveAndSendToEditor();
+      }
+
+      function retryAgent(name) {
+        if (name === 'Agent 02') {
+          selectTopic(currentTopic);
+        } else if (name === 'Agent 03') {
+          approveAndSendToEditor();
+        } else {
+          loadTopics();
+        }
+      }
+
+      loadTopics();
+    </script>
+  </body>
+</html>
