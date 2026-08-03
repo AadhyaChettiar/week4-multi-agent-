@@ -1,4 +1,4 @@
-# week4-multi-agent-Murder Mystery Dinner Party
+# Murder Mystery Dinner Party
 
 "*On load," shows the five topics as a clickable list for Murder Mystery Dinner Party. A"Five more topics" button reruns it.
 
